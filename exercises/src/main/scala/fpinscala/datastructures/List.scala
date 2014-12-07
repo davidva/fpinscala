@@ -89,6 +89,8 @@ object List { // `List` companion object. Contains functions for creating and wo
 
   def lengthLeft[A](l: List[A]): Int = foldLeft(l, 0)((acc, y) => acc + 1)
 
+  def reverse[A](l: List[A]): List[A] = foldLeft(l, List[A]())((acc, y) => Cons(y, acc))
+
   def map[A,B](l: List[A])(f: A => B): List[B] = sys.error("todo")
 }
 
@@ -117,5 +119,7 @@ object ListTest {
     println("productLeft ? %b".format(List.product(doubles) == List.productLeft(doubles)))
 
     println("lengthLeft ? %b".format(List.length(doubles) == List.lengthLeft(doubles)))
+
+    println("reverse ? %b".format(List.reverse(List(1, 2, 3, 4)) == List(4, 3, 2, 1)))
   }
 }
