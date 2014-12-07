@@ -179,7 +179,7 @@ object PolymorphicFunctions {
   // Exercise 5: Implement `compose`
 
   def compose[A,B,C](f: B => C, g: A => B): A => C =
-    ???
+    a => f(g(a))
 
   def main(args: Array[String]): Unit = {
     println("isSorted => true  == %b.".format(isSorted(Array(), (x: Int, y: Int) => x > y)))
@@ -189,6 +189,10 @@ object PolymorphicFunctions {
 
     def f = (a: Int, b: Int) => a + b
     println("curry => 3 == %d".format(curry(f)(1)(2)))
-    println("uncurry => 3 == %d".format( uncurry(curry(f))(1, 2)))
+    println("uncurry => 3 == %d".format(uncurry(curry(f))(1, 2)))
+
+    def g = (x: Int) => x + 1
+    def h = (x: Int) => x * 2
+    println("compose => 3 == %d".format(compose(g, h)(1)))
   }
 }
