@@ -91,7 +91,20 @@ object List { // `List` companion object. Contains functions for creating and wo
 
   def reverse[A](l: List[A]): List[A] = foldLeft(l, List[A]())((acc, y) => Cons(y, acc))
 
-  def map[A,B](l: List[A])(f: A => B): List[B] = sys.error("todo")
+  def appendWithFoldRight[A](a1: List[A], a2: List[A]): List[A] =
+    foldRight(a1, a2)(Cons(_, _))
+
+  def plus1(l: List[Int]): List[Int] =
+    foldRight(l, List[Int]())((x, acc) => Cons(x + 1, acc))
+
+  def mapToStr(l: List[Int]): List[String] =
+    foldRight(l, List[String]())((x, acc) => Cons(x.toString, acc))
+
+  def map[A,B](l: List[A])(f: A => B): List[B] =
+    foldRight(l, List[B]())((x, acc) => Cons(f(x), acc))
+
+  def filter[A](as: List[A])(f: A => Boolean): List[A] =
+    foldRight(as, List[A]())((x, acc) => if (f(x)) Cons(x, acc) else acc)
 }
 
 object ListTest {
@@ -121,5 +134,13 @@ object ListTest {
     println("lengthLeft ? %b".format(List.length(doubles) == List.lengthLeft(doubles)))
 
     println("reverse ? %b".format(List.reverse(List(1, 2, 3, 4)) == List(4, 3, 2, 1)))
+
+    println("appendWithFoldRight ? %b".format(List.appendWithFoldRight(List(1, 2), List(3, 4)) == List(1, 2, 3, 4)))
+
+    println("plus1 ? %b".format(List.plus1(List(1, 2, 3)) == List(2, 3, 4)))
+    println("mapToStr ? %b".format(List.mapToStr(List(1, 2, 3)) == List("1", "2", "3")))
+    println("map ? %b".format(List.map(List(1, 2, 3, 4))(_ * 2) == List(2, 4, 6, 8)))
+
+    println("filter ? %b".format(List.filter(List(1, 2, 3, 4))(_ % 2 == 0) == List(2, 4)))
   }
 }
