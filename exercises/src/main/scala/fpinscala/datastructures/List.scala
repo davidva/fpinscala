@@ -111,6 +111,9 @@ object List { // `List` companion object. Contains functions for creating and wo
 
   def flatMap[A, B](as: List[A])(f: A => List[B]): List[B] =
     concat(map(as)(f))
+
+  def filterWithFlatMap[A](l: List[A])(f: A => Boolean): List[A] =
+    flatMap(l)(a => if (f(a)) List(a) else Nil)
 }
 
 object ListTest {
@@ -145,7 +148,6 @@ object ListTest {
     test("productLeft")(List.product(doubles))(List.productLeft(doubles))
     test("lengthLeft")(List.length(doubles))(List.lengthLeft(doubles))
 
-
     test("reverse")(List.reverse(List(1, 2, 3, 4)))(List(4, 3, 2, 1))
 
     test("appendWithFoldRight")(List.appendWithFoldRight(List(1, 2), List(3, 4)))(List(1, 2, 3, 4))
@@ -157,5 +159,7 @@ object ListTest {
     test("filter")(List.filter(List(1, 2, 3, 4))(_ % 2 == 0))(List(2, 4))
 
     test("flatMap")(List.flatMap(List(1, 2, 3))(i => List(i, i)))(List(1, 1, 2, 2, 3, 3))
+
+    test("filterWithFlatMap")(List.filterWithFlatMap(List(1, 2, 3, 4))(_ % 2 == 0))(List(2, 4))
   }
 }
