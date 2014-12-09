@@ -123,6 +123,19 @@ object List { // `List` companion object. Contains functions for creating and wo
     case (_, Nil) => Nil
     case (Cons(a, as), Cons(b, bs)) => Cons(f(a, b), zipWith(as, bs)(f))
   }
+
+  def startsWith[A](sup: List[A], sub: List[A]): Boolean = (sup, sub) match {
+    case (_, Nil) => true
+    case (Cons(x, xs), Cons(y, ys)) if x == y => startsWith(xs, ys)
+    case _ => false
+  }
+
+  @annotation.tailrec
+  def hasSubsequence[A](sup: List[A], sub: List[A]): Boolean = sup match {
+    case Nil => false
+    case Cons(_, _) if startsWith(sup, sub) => true
+    case Cons(x, xs) => hasSubsequence(xs, sub)
+  }
 }
 
 object ListTest {
@@ -171,5 +184,10 @@ object ListTest {
 
     test("filterWithFlatMap")(List.filterWithFlatMap(List(1, 2, 3, 4))(_ % 2 == 0))(List(2, 4))
     test("addPairWise")(List.addPairWise(List(1, 2, 3), List(4, 5, 6)))(List(5, 7, 9))
+
+    test("hasSubsequence")(List.hasSubsequence(List(1, 2, 3), List(1, 3)))(false)
+    test("hasSubsequence")(List.hasSubsequence(List(1, 2, 3), List(1, 2)))(true)
+    test("hasSubsequence")(List.hasSubsequence(List(1, 2, 3), List(2, 3)))(true)
+    test("hasSubsequence")(List.hasSubsequence(List(1, 2, 3), List(3)))(true)
   }
 }
