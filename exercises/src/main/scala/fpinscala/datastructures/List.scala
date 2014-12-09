@@ -89,10 +89,13 @@ object List { // `List` companion object. Contains functions for creating and wo
 
   def lengthLeft[A](l: List[A]): Int = foldLeft(l, 0)((acc, y) => acc + 1)
 
-  def reverse[A](l: List[A]): List[A] = foldLeft(l, List[A]())((acc, y) => Cons(y, acc))
+  def reverse[A](l: List[A]): List[A] = foldLeft(l, Nil: List[A])((acc, y) => Cons(y, acc))
 
   def appendWithFoldRight[A](a1: List[A], a2: List[A]): List[A] =
     foldRight(a1, a2)(Cons(_, _))
+
+  def concat[A](xs: List[List[A]]): List[A] =
+    foldLeft(xs, Nil: List[A])(append)
 
   def plus1(l: List[Int]): List[Int] =
     foldRight(l, List[Int]())((x, acc) => Cons(x + 1, acc))
@@ -101,46 +104,57 @@ object List { // `List` companion object. Contains functions for creating and wo
     foldRight(l, List[String]())((x, acc) => Cons(x.toString, acc))
 
   def map[A,B](l: List[A])(f: A => B): List[B] =
-    foldRight(l, List[B]())((x, acc) => Cons(f(x), acc))
+    foldRight(l, Nil: List[B])((x, acc) => Cons(f(x), acc))
 
   def filter[A](as: List[A])(f: A => Boolean): List[A] =
-    foldRight(as, List[A]())((x, acc) => if (f(x)) Cons(x, acc) else acc)
+    foldRight(as, Nil: List[A])((x, acc) => if (f(x)) Cons(x, acc) else acc)
+
+  def flatMap[A, B](as: List[A])(f: A => List[B]): List[B] =
+    concat(map(as)(f))
 }
 
 object ListTest {
+  def test(name: String)(actual: Any)(expected: Any) =
+    if (actual == expected)
+      println(s"$name works!")
+    else
+      println(s"$name fails - $actual is not $expected")
+
   def main(args: Array[String]): Unit = {
-    println("tail ? %b".format(List.tail(List(1, 2, 3)) == List(2, 3)))
-    println("tail ? %b".format(List.tail(List(1)) == Nil))
-    println("setHead ? %b".format(List.setHead(List(1), 0) == List(0)))
-    println("setHead ? %b".format(List.setHead(List(1, 2), 0) == List(0, 2)))
-    println("drop ? %b".format(List.drop(List(1, 2), 0) == List(1, 2)))
-    println("drop ? %b".format(List.drop(List(1, 2), 2) == Nil))
-    println("drop ? %b".format(List.drop(List(1, 2), 3) == Nil))
-    println("dropWhile ? %b".format(List.dropWhile(List(1, 2, 1), (x: Int) => x > 0) == Nil))
-    println("dropWhile ? %b".format(List.dropWhile(List(1, 2, 1), (x: Int) => x < 0) == List(1, 2, 1)))
-    println("dropWhile ? %b".format(List.dropWhile(List(1, 2, 1), (x: Int) => x < 2) == List(2, 1)))
-    println("init ? %b".format(List.init(List(1)) == Nil))
-    println("init ? %b".format(List.init(List(1, 2, 3, 4)) == List(1, 2, 3)))
-    println("length ? %b".format(List.length(Nil) == 0))
-    println("length ? %b".format(List.length(List(1, 2, 3, 4)) == 4))
-    println("foldLeft ? %b".format(List.foldLeft(List(1, 2, 3, 4), 10)(_ + _) == 20))
+    test("tail")(List.tail(List(1, 2, 3)))(List(2, 3))
+    test("tail")(List.tail(List(1)))(Nil)
+    test("setHead")(List.setHead(List(1), 0))(List(0))
+    test("setHead")(List.setHead(List(1, 2), 0))(List(0, 2))
+    test("drop")(List.drop(List(1, 2), 0))(List(1, 2))
+    test("drop")(List.drop(List(1, 2), 2))(Nil)
+    test("drop")(List.drop(List(1, 2), 3))(Nil)
+    test("dropWhile")(List.dropWhile(List(1, 2, 1), (x: Int) => x > 0))(Nil)
+    test("dropWhile")(List.dropWhile(List(1, 2, 1), (x: Int) => x < 0))(List(1, 2, 1))
+    test("dropWhile")(List.dropWhile(List(1, 2, 1), (x: Int) => x < 2))(List(2, 1))
+    test("init")(List.init(List(1)))(Nil)
+    test("init")(List.init(List(1, 2, 3, 4)))(List(1, 2, 3))
+    test("length")(List.length(Nil))(0)
+    test("length")(List.length(List(1, 2, 3, 4)))(4)
+    test("foldLeft")(List.foldLeft(List(1, 2, 3, 4), 10)(_ + _))(20)
 
     val ints = List(1, 2, 3, 4)
-    println("sumLeft ? %b".format(List.sum(ints) == List.sumLeft(ints)))
+    test("sumLeft")(List.sum(ints))(List.sumLeft(ints))
 
     val doubles = List[Double](1, 2, 3, 4)
-    println("productLeft ? %b".format(List.product(doubles) == List.productLeft(doubles)))
+    test("productLeft")(List.product(doubles))(List.productLeft(doubles))
+    test("lengthLeft")(List.length(doubles))(List.lengthLeft(doubles))
 
-    println("lengthLeft ? %b".format(List.length(doubles) == List.lengthLeft(doubles)))
 
-    println("reverse ? %b".format(List.reverse(List(1, 2, 3, 4)) == List(4, 3, 2, 1)))
+    test("reverse")(List.reverse(List(1, 2, 3, 4)))(List(4, 3, 2, 1))
 
-    println("appendWithFoldRight ? %b".format(List.appendWithFoldRight(List(1, 2), List(3, 4)) == List(1, 2, 3, 4)))
+    test("appendWithFoldRight")(List.appendWithFoldRight(List(1, 2), List(3, 4)))(List(1, 2, 3, 4))
 
-    println("plus1 ? %b".format(List.plus1(List(1, 2, 3)) == List(2, 3, 4)))
-    println("mapToStr ? %b".format(List.mapToStr(List(1, 2, 3)) == List("1", "2", "3")))
-    println("map ? %b".format(List.map(List(1, 2, 3, 4))(_ * 2) == List(2, 4, 6, 8)))
+    test("plus1")(List.plus1(List(1, 2, 3)))(List(2, 3, 4))
+    test("mapToStr")(List.mapToStr(List(1, 2, 3)))(List("1", "2", "3"))
+    test("map")(List.map(List(1, 2, 3, 4))(_ * 2))(List(2, 4, 6, 8))
 
-    println("filter ? %b".format(List.filter(List(1, 2, 3, 4))(_ % 2 == 0) == List(2, 4)))
+    test("filter")(List.filter(List(1, 2, 3, 4))(_ % 2 == 0))(List(2, 4))
+
+    test("flatMap")(List.flatMap(List(1, 2, 3))(i => List(i, i)))(List(1, 1, 2, 2, 3, 3))
   }
 }
