@@ -114,11 +114,12 @@ object List { // `List` companion object. Contains functions for creating and wo
 }
 
 object ListTest {
-  def test(name: String)(actual: Any)(expected: Any) =
+  def test(name: String)(actual: Any)(expected: Any) {
     if (actual == expected)
       println(s"$name works!")
     else
       println(s"$name fails - $actual is not $expected")
+  }
 
   def main(args: Array[String]): Unit = {
     test("tail")(List.tail(List(1, 2, 3)))(List(2, 3))
