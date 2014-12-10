@@ -4,15 +4,24 @@ package fpinscala.errorhandling
 import scala.{Option => _, Some => _, Either => _, _} // hide std library `Option`, `Some` and `Either`, since we are writing our own in this chapter
 
 sealed trait Option[+A] {
-  def map[B](f: A => B): Option[B] = sys.error("todo")
+  def map[B](f: A => B): Option[B] = this match {
+    case None => None
+    case Some(a) => Some(f(a))
+  }
 
-  def getOrElse[B>:A](default: => B): B = sys.error("todo")
+  def getOrElse[B>:A](default: => B): B = this match {
+    case None => default
+    case Some(a) => a
+  }
 
-  def flatMap[B](f: A => Option[B]): Option[B] = sys.error("todo")
+  def flatMap[B](f: A => Option[B]): Option[B] = map(f) getOrElse None
 
-  def orElse[B>:A](ob: => Option[B]): Option[B] = sys.error("todo")
+  def orElse[B>:A](ob: => Option[B]): Option[B] = map(Some(_)) getOrElse ob
 
-  def filter(f: A => Boolean): Option[A] = sys.error("todo")
+  def filter(f: A => Boolean): Option[A] = this match {
+    case Some(a) if (f(a)) => Some(a)
+    case _ => None
+  }
 }
 case class Some[+A](get: A) extends Option[A]
 case object None extends Option[Nothing]
@@ -45,4 +54,30 @@ object Option {
   def sequence[A](a: List[Option[A]]): Option[List[A]] = sys.error("todo")
 
   def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = sys.error("todo")
+}
+
+object OptionTest {
+  def test(name: String)(actual: Any)(expected: Any) {
+    if (actual == expected)
+      println(s"$name works!")
+    else
+      println(s"$name fails - $actual is not $expected")
+  }
+
+  def main(args: Array[String]): Unit = {
+    test("map")(None.map(x => x.toString))(None)
+    test("map")(Some(1).map(x => x.toString))(Some("1"))
+
+    test("getOrElse")(None.getOrElse("a"))("a")
+    test("getOrElse")(Some("1").getOrElse(Some("a")))("1")
+
+    test("flatMap")(None.flatMap(x => Some(x.toString)))(None)
+    test("flatMap")(Some(1).flatMap(x => Some(x.toString)))(Some("1"))
+
+    test("orElse")(None.orElse(Some("a")))(Some("a"))
+    test("orElse")(Some("1").orElse(Some("a")))("1")
+
+    test("filter")(None.filter(a => true))(None)
+    test("filter")(Some(1).filter(a => true))(Some(1))
+  }
 }
