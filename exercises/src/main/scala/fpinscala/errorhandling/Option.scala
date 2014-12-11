@@ -23,6 +23,7 @@ sealed trait Option[+A] {
     case _ => None
   }
 }
+
 case class Some[+A](get: A) extends Option[A]
 case object None extends Option[Nothing]
 
@@ -65,8 +66,8 @@ object OptionTest {
   }
 
   def main(args: Array[String]): Unit = {
-    test("map")(None.map(x => x.toString))(None)
-    test("map")(Some(1).map(x => x.toString))(Some("1"))
+    test("map")(None.map(x => Some(x.toString)))(None)
+    test("map")(Some(1).map(x => Some(x.toString)))(Some(Some("1")))
 
     test("getOrElse")(None.getOrElse("a"))("a")
     test("getOrElse")(Some("1").getOrElse(Some("a")))("1")
@@ -75,7 +76,7 @@ object OptionTest {
     test("flatMap")(Some(1).flatMap(x => Some(x.toString)))(Some("1"))
 
     test("orElse")(None.orElse(Some("a")))(Some("a"))
-    test("orElse")(Some("1").orElse(Some("a")))("1")
+    test("orElse")(Some("1").orElse(Some("a")))(Some("1"))
 
     test("filter")(None.filter(a => true))(None)
     test("filter")(Some(1).filter(a => true))(Some(1))
