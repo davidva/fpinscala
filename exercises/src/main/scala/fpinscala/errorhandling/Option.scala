@@ -48,11 +48,18 @@ object Option {
   def mean(xs: Seq[Double]): Option[Double] =
     if (xs.isEmpty) None
     else Some(xs.sum / xs.length)
+
   def variance(xs: Seq[Double]): Option[Double] = sys.error("todo")
 
-  def map2[A,B,C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = sys.error("todo")
+  def map2[A,B,C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = (a, b) match {
+    case (None,_) | (_,None) => None
+    case (Some(x), Some(y)) => Some(f(x,y))
+  }
 
-  def sequence[A](a: List[Option[A]]): Option[List[A]] = sys.error("todo")
+  def sequence[A](a: List[Option[A]]): Option[List[A]] = a match {
+    case Nil => Some(Nil)
+    case a :: as => a flatMap (aa => sequence(as) map (aa :: _))
+  }
 
   def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = sys.error("todo")
 }
@@ -80,5 +87,11 @@ object OptionTest {
 
     test("filter")(None.filter(a => true))(None)
     test("filter")(Some(1).filter(a => true))(Some(1))
+
+    test("map2")(Option.map2(None, Some(5))((x: Int, y: Int) => x * y))(None)
+    test("map2")(Option.map2(Some(4), Some(5))((x: Int, y: Int) => x * y))(Some(20))
+
+    test("sequence")(Option.sequence(List(Some(1),None,Some(3))))(None)
+    test("sequence")(Option.sequence(List(Some(1),Some(2),Some(3))))(Some(List(1,2,3)))
   }
 }
