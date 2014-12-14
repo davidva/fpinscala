@@ -56,12 +56,13 @@ object Option {
     case (Some(x), Some(y)) => Some(f(x,y))
   }
 
-  def sequence[A](a: List[Option[A]]): Option[List[A]] = a match {
-    case Nil => Some(Nil)
-    case a :: as => a flatMap (aa => sequence(as) map (aa :: _))
-  }
+  def sequence[A](a: List[Option[A]]): Option[List[A]] =
+    traverse(a)(identity)
 
-  def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = sys.error("todo")
+  def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = a match {
+    case Nil => Some(Nil)
+    case a :: as => f(a) flatMap (aa => traverse(as)(f) map (aa :: _))
+  }
 }
 
 object OptionTest {
@@ -93,5 +94,14 @@ object OptionTest {
 
     test("sequence")(Option.sequence(List(Some(1),None,Some(3))))(None)
     test("sequence")(Option.sequence(List(Some(1),Some(2),Some(3))))(Some(List(1,2,3)))
+
+    def Try[A,B](f: A => B)(a: A): Option[B] =
+      try {
+        Some(f(a))
+      } catch {
+        case e: Exception => None
+      }
+    test("traverse")(Option.traverse(List("1","a"))(Try(i => i.toInt)))(None)
+    test("traverse")(Option.traverse(List("1","2"))(Try(i => i.toInt)))(Some(List(1,2)))
   }
 }
