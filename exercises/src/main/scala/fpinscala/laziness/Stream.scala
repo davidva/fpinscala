@@ -27,10 +27,8 @@ trait Stream[+A] {
 
   def startsWith[B](s: Stream[B]): Boolean = sys.error("todo")
 
-  def toList: List[A] = this match {
-    case Empty => Nil
-    case Cons(h, t) => h() :: t().toList
-  }
+  def toList: List[A] =
+    foldRight(Nil: List[A])((a, acc) => a :: acc)
 }
 case object Empty extends Stream[Nothing]
 case class Cons[+A](h: () => A, t: () => Stream[A]) extends Stream[A]
