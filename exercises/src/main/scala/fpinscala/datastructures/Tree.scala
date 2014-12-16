@@ -25,12 +25,7 @@ object Tree {
 }
 
 object TreeTest {
-  def test(name: String)(actual: Any)(expected: Any) {
-    if (actual == expected)
-      println(s"$name works!")
-    else
-      println(s"$name fails - $actual is not $expected")
-  }
+  import fpinscala.Test.test
 
   def main(args: Array[String]): Unit = {
     val tree: Tree[Int] = Branch(Branch(Leaf(1), Leaf(7)), Leaf(3))
