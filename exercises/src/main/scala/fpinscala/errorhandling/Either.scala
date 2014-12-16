@@ -5,15 +5,25 @@ import scala.{Option => _, Either => _, Left => _, Right => _, _} // hide std li
 
 sealed trait Either[+E,+A] {
  def map[B](f: A => B): Either[E, B] = this match {
-   case Left(a) => Left(a)
+   case Left(e) => Left(e)
    case Right(a) => Right(f(a))
  }
 
- def flatMap[EE >: E, B](f: A => Either[EE, B]): Either[EE, B] = sys.error("todo")
+ def flatMap[EE >: E, B](f: A => Either[EE, B]): Either[EE, B] = this match {
+   case Left(e) => Left(e)
+   case Right(a) => f(a)
+ }
 
- def orElse[EE >: E, B >: A](b: => Either[EE, B]): Either[EE, B] = sys.error("todo")
+ def orElse[EE >: E, B >: A](b: => Either[EE, B]): Either[EE, B] = this match {
+  case Left(_) => b
+  case _ => this
+ }
 
- def map2[EE >: E, B, C](b: Either[EE, B])(f: (A, B) => C): Either[EE, C] = sys.error("todo")
+ def map2[EE >: E, B, C](b: Either[EE, B])(f: (A, B) => C): Either[EE, C] = (this, b) match {
+  case (Left(e), _) => Left(e)
+  case (_, Left(e)) => Left(e)
+  case (Right(a), Right(b)) => Right(f(a, b))
+ }
 }
 case class Left[+E](get: E) extends Either[E,Nothing]
 case class Right[+A](get: A) extends Either[Nothing,A]
@@ -36,15 +46,33 @@ object Either {
 }
 
 object EitherTest {
-  def test(name: String)(actual: Any)(expected: Any) {
-    if (actual == expected)
-      println(s"$name works!")
-    else
-      println(s"$name fails - $actual is not $expected")
-  }
+  import fpinscala.Test.test
 
   def main(args: Array[String]): Unit = {
-    test("map")(Left("I'm left") map ((x: Int) => x * 2))(Left("I'm left"))
-    test("map")(Right(2) map (_ * 2))(Right(4))
+    val left: Either[String,Int] = Left("I'm left")
+    val right0: Either[String,Int] = Right(0)
+    val right2: Either[String,Int] = Right(2)
+    val right4: Either[String,Int] = Right(4)
+
+    def dup(x: Int): Int = x * 2
+    test("map")(left map dup)(left)
+    test("map")(right2 map dup)(right4)
+
+    def invert(x: Int): Either[String, Double] = x match {
+      case 0 => Left("cannot divide by 0")
+      case x => Right(1d / x)
+    }
+
+    test("flatMap")(left flatMap invert)(left)
+    test("flatMap")(right0 flatMap invert)(Left("cannot divide by 0"))
+    test("flatMap")(right2 flatMap invert)(Right(0.5))
+
+    test("orElse")(left orElse right2)(right2)
+    test("orElse")(right0 orElse right2)(right0)
+
+    def append(x: Int, y: Int): String = s"$x$y"
+    test("map2")(left.map2(right2)(append))(left)
+    test("map2")(right0.map2(left)(append))(left)
+    test("map2")(right0.map2(right2)(append))(Right("02"))
   }
 }
