@@ -16,8 +16,15 @@ trait Stream[+A] {
   final def find(f: A => Boolean): Option[A] = this match {
     case Empty => None
     case Cons(h, t) => if (f(h())) Some(h()) else t().find(f)
+
   }
-  def take(n: Int): Stream[A] = sys.error("todo")
+  def take(n: Int): Stream[A] =
+    if (n > 0) this match {
+      case Cons(h,t) if n == 1 => cons(h(), Stream.empty)
+      case Cons(h,t) => cons(h(), t().take(n - 1))
+      case _ => Empty
+    }
+    else Stream.empty
 
   def drop(n: Int): Stream[A] = sys.error("todo")
 
@@ -56,6 +63,11 @@ object StreamTest {
   import fpinscala.Test.test
 
   def main(args: Array[String]): Unit = {
-    test("toList")(Stream(1,2,3).toList)(List(1,2,3))
+    val stream123: Stream[Int] = Stream(1,2,3)
+    test("toList")(stream123.toList)(List(1,2,3))
+
+    test("take")(Stream.empty.take(2).toList)(Nil)
+    test("take")(stream123.take(4).toList)(List(1,2,3))
+    test("take")(stream123.take(2).toList)(List(1,2))
   }
 }
