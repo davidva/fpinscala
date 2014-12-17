@@ -20,15 +20,19 @@ trait Stream[+A] {
   }
   def take(n: Int): Stream[A] =
     if (n > 0) this match {
-      case Cons(h,t) if n == 1 => cons(h(), Stream.empty)
+      case Cons(h,t) if n == 1 => cons(h(), empty)
       case Cons(h,t) => cons(h(), t().take(n - 1))
       case _ => Empty
+
     }
     else Stream.empty
 
   def drop(n: Int): Stream[A] = sys.error("todo")
 
-  def takeWhile(p: A => Boolean): Stream[A] = sys.error("todo")
+  def takeWhile(p: A => Boolean): Stream[A] = this match {
+    case Empty => empty
+    case Cons(h,t) => if (p(h())) cons(h(), t().takeWhile(p)) else Empty
+  }
 
   def forAll(p: A => Boolean): Boolean = sys.error("todo")
 
@@ -69,5 +73,10 @@ object StreamTest {
     test("take")(Stream.empty.take(2).toList)(Nil)
     test("take")(stream123.take(4).toList)(List(1,2,3))
     test("take")(stream123.take(2).toList)(List(1,2))
+
+    def isNot(n: Int)(i: Int): Boolean = i != n
+    test("takeWhile")(Stream.empty.takeWhile(isNot(1)).toList)(Nil)
+    test("takeWhile")(stream123.takeWhile(isNot(1)).toList)(Nil)
+    test("takeWhile")(stream123.takeWhile(isNot(3)).toList)(List(1,2))
   }
 }
