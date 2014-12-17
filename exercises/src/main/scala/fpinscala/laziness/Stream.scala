@@ -34,12 +34,11 @@ trait Stream[+A] {
     case Cons(h,t) => if (p(h())) cons(h(), t().takeWhile(p)) else Empty
   }
 
-  def forAll(p: A => Boolean): Boolean = sys.error("todo")
+  def forAll(p: A => Boolean): Boolean = foldRight(true)((a, acc) => p(a) && acc)
 
   def startsWith[B](s: Stream[B]): Boolean = sys.error("todo")
 
-  def toList: List[A] =
-    foldRight(Nil: List[A])((a, acc) => a :: acc)
+  def toList: List[A] = foldRight(Nil: List[A])((a, acc) => a :: acc)
 }
 case object Empty extends Stream[Nothing]
 case class Cons[+A](h: () => A, t: () => Stream[A]) extends Stream[A]
@@ -78,5 +77,9 @@ object StreamTest {
     test("takeWhile")(Stream.empty.takeWhile(isNot(1)).toList)(Nil)
     test("takeWhile")(stream123.takeWhile(isNot(1)).toList)(Nil)
     test("takeWhile")(stream123.takeWhile(isNot(3)).toList)(List(1,2))
+
+    test("forAll")(Stream.empty.forAll(isNot(1)))(true)
+    test("forAll")(stream123.forAll(isNot(4)))(true)
+    test("forAll")(stream123.forAll(isNot(2)))(false)
   }
 }
