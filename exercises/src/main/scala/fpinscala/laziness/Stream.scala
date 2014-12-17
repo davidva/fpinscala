@@ -29,10 +29,8 @@ trait Stream[+A] {
 
   def drop(n: Int): Stream[A] = sys.error("todo")
 
-  def takeWhile(p: A => Boolean): Stream[A] = this match {
-    case Empty => empty
-    case Cons(h,t) => if (p(h())) cons(h(), t().takeWhile(p)) else Empty
-  }
+  def takeWhile(p: A => Boolean): Stream[A] =
+    foldRight(Empty: Stream[A])((a, acc) => if (p(a)) cons(a, acc) else empty)
 
   def forAll(p: A => Boolean): Boolean = foldRight(true)((a, acc) => p(a) && acc)
 
