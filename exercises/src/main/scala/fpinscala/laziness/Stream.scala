@@ -36,7 +36,10 @@ trait Stream[+A] {
 
   def startsWith[B](s: Stream[B]): Boolean = sys.error("todo")
 
-  def toList: List[A] = foldRight(Nil: List[A])((a, acc) => a :: acc)
+  def toList: List[A] = foldRight(Nil: List[A])((a,acc) => a :: acc)
+
+  def headOption: Option[A] =
+    foldRight(None: Option[A])((a,_) => Some(a))
 }
 case object Empty extends Stream[Nothing]
 case class Cons[+A](h: () => A, t: () => Stream[A]) extends Stream[A]
@@ -79,5 +82,8 @@ object StreamTest {
     test("forAll")(Stream.empty.forAll(isNot(1)))(true)
     test("forAll")(stream123.forAll(isNot(4)))(true)
     test("forAll")(stream123.forAll(isNot(2)))(false)
+
+    test("headOption")(Stream.empty.headOption)(None)
+    test("headOption")(stream123.headOption)(Some(1))
   }
 }
