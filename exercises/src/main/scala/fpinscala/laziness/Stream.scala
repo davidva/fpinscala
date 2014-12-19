@@ -40,6 +40,20 @@ trait Stream[+A] {
 
   def headOption: Option[A] =
     foldRight(None: Option[A])((a,_) => Some(a))
+
+  def map[B](f: A => B): Stream[B] =
+    foldRight(empty[B])((a, b) => cons(f(a), b))
+
+  def filter(f: A => Boolean): Stream[A] =
+    foldRight(empty[A])((h, t) =>
+      if (f(h)) cons(h, t)
+      else t)
+
+  def append[B>:A](other: => Stream[B]): Stream[B] =
+    foldRight(other)((h, t) => cons(h, t))
+
+  def flatMap[B](f: A => Stream[B]): Stream[B] =
+    foldRight(empty[B])((h,t) => f(h) append t)
 }
 case object Empty extends Stream[Nothing]
 case class Cons[+A](h: () => A, t: () => Stream[A]) extends Stream[A]
@@ -85,5 +99,10 @@ object StreamTest {
 
     test("headOption")(Stream.empty.headOption)(None)
     test("headOption")(stream123.headOption)(Some(1))
+
+    test("map")(stream123.map(_.toString).toList)(List("1","2","3"))
+    test("filter")(stream123.filter(_ < 3).toList)(List(1,2))
+    test("append")(stream123.append(Stream(4,5,6)).toList)(List(1,2,3,4,5,6))
+    test("flatMap")(stream123.flatMap(a => Stream(a, a)).toList)(List(1,1,2,2,3,3))
   }
 }
