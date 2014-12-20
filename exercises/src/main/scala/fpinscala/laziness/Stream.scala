@@ -54,6 +54,39 @@ trait Stream[+A] {
 
   def flatMap[B](f: A => Stream[B]): Stream[B] =
     foldRight(empty[B])((h,t) => f(h) append t)
+
+  def mapWithUnfold[B](f: A => B): Stream[B] =
+    unfold(this) {
+      case Empty => None
+      case Cons(h,t) => Some((f(h()), t()))
+    }
+
+  def takeWithUnfold(n: Int): Stream[A] =
+    unfold((n, this)) {
+      case (0, _) => None
+      case (_, Empty) => None
+      case (n, Cons(h,t)) => Some(h(), (n - 1, t()))
+    }
+
+  def takeWhileWithUnfold(p: A => Boolean): Stream[A] =
+    unfold(this) {
+      case Cons(h,t) if (p(h())) => Some(h(), t())
+      case _ => None
+    }
+
+  def zipWith[B, C](s: Stream[B])(f: (A, B) => C): Stream[C] =
+    unfold((this,s)) {
+      case (Cons(h1,t1),Cons(h2,t2)) => Some(f(h1(),h2()), (t1(), t2()))
+      case _ => None
+    }
+
+  def zipAll[B](s: Stream[B]): Stream[(Option[A],Option[B])] =
+    unfold((this,s)) {
+      case (Empty,Empty) => None
+      case (Empty,Cons(h,t)) => Some((None,Some(h())),(Empty,t()))
+      case (Cons(h,t),Empty) => Some((Some(h()),None),(t(),Empty))
+      case (Cons(h1,t1),Cons(h2,t2)) => Some((Some(h1()),Some(h2())),(t1(),t2()))
+    }
 }
 case object Empty extends Stream[Nothing]
 case class Cons[+A](h: () => A, t: () => Stream[A]) extends Stream[A]
@@ -100,6 +133,7 @@ object StreamTest {
 
   def main(args: Array[String]): Unit = {
     val stream123: Stream[Int] = Stream(1,2,3)
+    val stream456: Stream[Int] = Stream(4,5,6)
     test("toList")(stream123.toList)(List(1,2,3))
 
     test("take")(Stream.empty.take(2).toList)(Nil)
@@ -120,7 +154,7 @@ object StreamTest {
 
     test("map")(stream123.map(_.toString).toList)(List("1","2","3"))
     test("filter")(stream123.filter(_ < 3).toList)(List(1,2))
-    test("append")(stream123.append(Stream(4,5,6)).toList)(List(1,2,3,4,5,6))
+    test("append")(stream123.append(stream456).toList)(List(1,2,3,4,5,6))
     test("flatMap")(stream123.flatMap(a => Stream(a, a)).toList)(List(1,1,2,2,3,3))
 
     test("constant")(Stream.constant("A").take(5).toList)(List("A","A","A","A","A"))
@@ -133,5 +167,18 @@ object StreamTest {
     test("constantWithUnfold")(Stream.constantWithUnfold("A").take(5).toList)(List("A","A","A","A","A"))
     test("fromWithUnfold")(Stream.fromWithUnfold(4).take(3).toList)(List(4,5,6))
     test("fibsWithUnfold")(Stream.fibsWithUnfold.take(8).toList)(List(0,1,1,2,3,5,8,13))
+
+    val emptyIntStream: Stream[Int] = empty;
+    test("mapWithUnfold")(emptyIntStream.mapWithUnfold(_.toString).toList)(Nil)
+    test("mapWithUnfold")(stream123.mapWithUnfold(_.toString).toList)(List("1","2","3"))
+    test("takeWithUnfold")(stream123.takeWithUnfold(2).toList)(List(1,2))
+    test("takeWithUnfold")(stream123.takeWithUnfold(4).toList)(List(1,2,3))
+    test("takeWithUnfold")(emptyIntStream.takeWithUnfold(4).toList)(Nil)
+    test("takeWhileWithUnfold")(emptyIntStream.takeWhileWithUnfold(isNot(3)).toList)(Nil)
+    test("takeWhileWithUnfold")(stream123.takeWhileWithUnfold(isNot(1)).toList)(Nil)
+    test("takeWhileWithUnfold")(stream123.takeWhileWithUnfold(isNot(3)).toList)(List(1,2))
+    test("zipWith")(stream123.zipWith(emptyIntStream)((a,b) => s"$a$b").toList)(Nil)
+    test("zipWith")(stream123.zipWith(stream456)((a,b) => s"$a$b").toList)(List("14","25","36"))
+    test("zipAll")(Stream("A").zipAll(stream123).toList)(List((Some("A"),Some(1)),(None,Some(2)),(None,Some(3))))
   }
 }
