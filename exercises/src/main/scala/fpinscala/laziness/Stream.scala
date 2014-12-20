@@ -83,7 +83,16 @@ object Stream {
     go(0, 1)
   }
 
-  def unfold[A, S](z: S)(f: S => Option[(A, S)]): Stream[A] = sys.error("todo")
+  def unfold[A, S](z: S)(f: S => Option[(A, S)]): Stream[A] =
+    f(z) match {
+      case None => Empty
+      case Some((a, s)) => cons(a, unfold(s)(f))
+    }
+
+  def onesWithUnfold: Stream[Int] = unfold(None)(_ => Some(1, None))
+  def constantWithUnfold[A](a: A): Stream[A] = unfold(None)(_ => Some(a, None))
+  def fromWithUnfold(n: Int): Stream[Int] = unfold(n)(s => Some(s, s + 1))
+  def fibsWithUnfold: Stream[Int] = unfold((0,1)) { case (a, b) => Some(a, (b, b + a)) }
 }
 
 object StreamTest {
@@ -119,5 +128,10 @@ object StreamTest {
     test("from")(Stream.from(4).take(3).toList)(List(4,5,6))
 
     test("fibs")(Stream.fibs.take(8).toList)(List(0,1,1,2,3,5,8,13))
+
+    test("onesWithUnfold")(Stream.onesWithUnfold.take(5).toList)(List(1,1,1,1,1))
+    test("constantWithUnfold")(Stream.constantWithUnfold("A").take(5).toList)(List("A","A","A","A","A"))
+    test("fromWithUnfold")(Stream.fromWithUnfold(4).take(3).toList)(List(4,5,6))
+    test("fibsWithUnfold")(Stream.fibsWithUnfold.take(8).toList)(List(0,1,1,2,3,5,8,13))
   }
 }
