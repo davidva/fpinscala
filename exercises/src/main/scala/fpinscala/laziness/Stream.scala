@@ -34,7 +34,11 @@ trait Stream[+A] {
 
   def forAll(p: A => Boolean): Boolean = foldRight(true)((a, acc) => p(a) && acc)
 
-  def startsWith[B](s: Stream[B]): Boolean = sys.error("todo")
+  def startsWith[B](s: Stream[B]): Boolean =
+    zipAll(s).takeWhile {
+      case (_, None) => false
+      case _ => true
+    } forAll { case (a,b) => a == b }
 
   def toList: List[A] = foldRight(Nil: List[A])((a,acc) => a :: acc)
 
@@ -180,5 +184,10 @@ object StreamTest {
     test("zipWith")(stream123.zipWith(emptyIntStream)((a,b) => s"$a$b").toList)(Nil)
     test("zipWith")(stream123.zipWith(stream456)((a,b) => s"$a$b").toList)(List("14","25","36"))
     test("zipAll")(Stream("A").zipAll(stream123).toList)(List((Some("A"),Some(1)),(None,Some(2)),(None,Some(3))))
+
+    test("startsWith")(stream123 startsWith Stream(1,2))(true)
+    test("startsWith")(stream123 startsWith stream123)(true)
+    test("startsWith")(Stream(1,2) startsWith stream123)(false)
+    test("startsWith")(emptyIntStream startsWith Stream(1,2))(false)
   }
 }
