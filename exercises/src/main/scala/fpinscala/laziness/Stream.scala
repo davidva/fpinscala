@@ -27,7 +27,10 @@ trait Stream[+A] {
     }
     else Stream.empty
 
-  def drop(n: Int): Stream[A] = sys.error("todo")
+  def drop(n: Int): Stream[A] = this match {
+    case Cons(h,t) => t()
+    case _ => Empty
+  }
 
   def takeWhile(p: A => Boolean): Stream[A] =
     foldRight(Empty: Stream[A])((a, acc) => if (p(a)) cons(a, acc) else empty)
@@ -91,6 +94,12 @@ trait Stream[+A] {
       case (Cons(h,t),Empty) => Some((Some(h()),None),(t(),Empty))
       case (Cons(h1,t1),Cons(h2,t2)) => Some((Some(h1()),Some(h2())),(t1(),t2()))
     }
+
+  def tails: Stream[Stream[A]] =
+    unfold(this) {
+      case Empty => None
+      case s => Some((s, s drop 1))
+    } append Stream(empty)
 }
 case object Empty extends Stream[Nothing]
 case class Cons[+A](h: () => A, t: () => Stream[A]) extends Stream[A]
@@ -189,5 +198,7 @@ object StreamTest {
     test("startsWith")(stream123 startsWith stream123)(true)
     test("startsWith")(Stream(1,2) startsWith stream123)(false)
     test("startsWith")(emptyIntStream startsWith Stream(1,2))(false)
+
+    test("tails")(stream123.tails.toList.map(_.toList))(Stream(Stream(1,2,3), Stream(2,3), Stream(3), Stream()).toList.map(_.toList))
   }
 }
