@@ -59,12 +59,15 @@ object RNG {
   }
 
   def ints(count: Int)(rng: RNG): (List[Int], RNG) = {
-    if (count == 0) (Nil, rng)
-    else {
-      val (x, r1) = rng.nextInt
-      val (xs, r2) = ints(count - 1)(r1)
-      (x :: xs, r2)
+    @annotation.tailrec
+    def go(count: Int, rng: RNG, acc: List[Int]): (List[Int], RNG) = {
+      if (count == 0) (acc, rng)
+      else {
+        val (i, r1) = rng.nextInt
+        go(count -1, r1, i :: acc)
+      }
     }
+    go(count, rng, Nil)
   }
 
   def map2[A,B,C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = ???
@@ -106,5 +109,5 @@ object StateTest extends App with fpinscala.Test {
 
   test("ints")(RNG.ints(0)(rng1)._1)(Nil)
   test("ints")(RNG.ints(1)(rng1)._1)(List(384748))
-  test("ints")(RNG.ints(2)(rng1)._1)(List(384748, -1151252339))
+  test("ints")(RNG.ints(2)(rng1)._1)(List(-1151252339, 384748))
 }
