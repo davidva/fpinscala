@@ -1,6 +1,6 @@
 package fpinscala
 
-object Test {
+trait Test {
   def test(name: String)(actual: Any)(expected: Any) {
     if (actual == expected)
       println(s"$name works!")

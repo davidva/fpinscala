@@ -141,64 +141,60 @@ object Stream {
   def fibsWithUnfold: Stream[Int] = unfold((0,1)) { case (a, b) => Some(a, (b, b + a)) }
 }
 
-object StreamTest {
-  import fpinscala.Test.test
+object StreamTest extends App with fpinscala.Test {
+  val stream123: Stream[Int] = Stream(1,2,3)
+  val stream456: Stream[Int] = Stream(4,5,6)
+  test("toList")(stream123.toList)(List(1,2,3))
 
-  def main(args: Array[String]): Unit = {
-    val stream123: Stream[Int] = Stream(1,2,3)
-    val stream456: Stream[Int] = Stream(4,5,6)
-    test("toList")(stream123.toList)(List(1,2,3))
+  test("take")(Stream.empty.take(2).toList)(Nil)
+  test("take")(stream123.take(4).toList)(List(1,2,3))
+  test("take")(stream123.take(2).toList)(List(1,2))
 
-    test("take")(Stream.empty.take(2).toList)(Nil)
-    test("take")(stream123.take(4).toList)(List(1,2,3))
-    test("take")(stream123.take(2).toList)(List(1,2))
+  def isNot(n: Int)(i: Int): Boolean = i != n
+  test("takeWhile")(Stream.empty.takeWhile(isNot(1)).toList)(Nil)
+  test("takeWhile")(stream123.takeWhile(isNot(1)).toList)(Nil)
+  test("takeWhile")(stream123.takeWhile(isNot(3)).toList)(List(1,2))
 
-    def isNot(n: Int)(i: Int): Boolean = i != n
-    test("takeWhile")(Stream.empty.takeWhile(isNot(1)).toList)(Nil)
-    test("takeWhile")(stream123.takeWhile(isNot(1)).toList)(Nil)
-    test("takeWhile")(stream123.takeWhile(isNot(3)).toList)(List(1,2))
+  test("forAll")(Stream.empty.forAll(isNot(1)))(true)
+  test("forAll")(stream123.forAll(isNot(4)))(true)
+  test("forAll")(stream123.forAll(isNot(2)))(false)
 
-    test("forAll")(Stream.empty.forAll(isNot(1)))(true)
-    test("forAll")(stream123.forAll(isNot(4)))(true)
-    test("forAll")(stream123.forAll(isNot(2)))(false)
+  test("headOption")(Stream.empty.headOption)(None)
+  test("headOption")(stream123.headOption)(Some(1))
 
-    test("headOption")(Stream.empty.headOption)(None)
-    test("headOption")(stream123.headOption)(Some(1))
+  test("map")(stream123.map(_.toString).toList)(List("1","2","3"))
+  test("filter")(stream123.filter(_ < 3).toList)(List(1,2))
+  test("append")(stream123.append(stream456).toList)(List(1,2,3,4,5,6))
+  test("flatMap")(stream123.flatMap(a => Stream(a, a)).toList)(List(1,1,2,2,3,3))
 
-    test("map")(stream123.map(_.toString).toList)(List("1","2","3"))
-    test("filter")(stream123.filter(_ < 3).toList)(List(1,2))
-    test("append")(stream123.append(stream456).toList)(List(1,2,3,4,5,6))
-    test("flatMap")(stream123.flatMap(a => Stream(a, a)).toList)(List(1,1,2,2,3,3))
+  test("constant")(Stream.constant("A").take(5).toList)(List("A","A","A","A","A"))
 
-    test("constant")(Stream.constant("A").take(5).toList)(List("A","A","A","A","A"))
+  test("from")(Stream.from(4).take(3).toList)(List(4,5,6))
 
-    test("from")(Stream.from(4).take(3).toList)(List(4,5,6))
+  test("fibs")(Stream.fibs.take(8).toList)(List(0,1,1,2,3,5,8,13))
 
-    test("fibs")(Stream.fibs.take(8).toList)(List(0,1,1,2,3,5,8,13))
+  test("onesWithUnfold")(Stream.onesWithUnfold.take(5).toList)(List(1,1,1,1,1))
+  test("constantWithUnfold")(Stream.constantWithUnfold("A").take(5).toList)(List("A","A","A","A","A"))
+  test("fromWithUnfold")(Stream.fromWithUnfold(4).take(3).toList)(List(4,5,6))
+  test("fibsWithUnfold")(Stream.fibsWithUnfold.take(8).toList)(List(0,1,1,2,3,5,8,13))
 
-    test("onesWithUnfold")(Stream.onesWithUnfold.take(5).toList)(List(1,1,1,1,1))
-    test("constantWithUnfold")(Stream.constantWithUnfold("A").take(5).toList)(List("A","A","A","A","A"))
-    test("fromWithUnfold")(Stream.fromWithUnfold(4).take(3).toList)(List(4,5,6))
-    test("fibsWithUnfold")(Stream.fibsWithUnfold.take(8).toList)(List(0,1,1,2,3,5,8,13))
+  val emptyIntStream: Stream[Int] = empty;
+  test("mapWithUnfold")(emptyIntStream.mapWithUnfold(_.toString).toList)(Nil)
+  test("mapWithUnfold")(stream123.mapWithUnfold(_.toString).toList)(List("1","2","3"))
+  test("takeWithUnfold")(stream123.takeWithUnfold(2).toList)(List(1,2))
+  test("takeWithUnfold")(stream123.takeWithUnfold(4).toList)(List(1,2,3))
+  test("takeWithUnfold")(emptyIntStream.takeWithUnfold(4).toList)(Nil)
+  test("takeWhileWithUnfold")(emptyIntStream.takeWhileWithUnfold(isNot(3)).toList)(Nil)
+  test("takeWhileWithUnfold")(stream123.takeWhileWithUnfold(isNot(1)).toList)(Nil)
+  test("takeWhileWithUnfold")(stream123.takeWhileWithUnfold(isNot(3)).toList)(List(1,2))
+  test("zipWith")(stream123.zipWith(emptyIntStream)((a,b) => s"$a$b").toList)(Nil)
+  test("zipWith")(stream123.zipWith(stream456)((a,b) => s"$a$b").toList)(List("14","25","36"))
+  test("zipAll")(Stream("A").zipAll(stream123).toList)(List((Some("A"),Some(1)),(None,Some(2)),(None,Some(3))))
 
-    val emptyIntStream: Stream[Int] = empty;
-    test("mapWithUnfold")(emptyIntStream.mapWithUnfold(_.toString).toList)(Nil)
-    test("mapWithUnfold")(stream123.mapWithUnfold(_.toString).toList)(List("1","2","3"))
-    test("takeWithUnfold")(stream123.takeWithUnfold(2).toList)(List(1,2))
-    test("takeWithUnfold")(stream123.takeWithUnfold(4).toList)(List(1,2,3))
-    test("takeWithUnfold")(emptyIntStream.takeWithUnfold(4).toList)(Nil)
-    test("takeWhileWithUnfold")(emptyIntStream.takeWhileWithUnfold(isNot(3)).toList)(Nil)
-    test("takeWhileWithUnfold")(stream123.takeWhileWithUnfold(isNot(1)).toList)(Nil)
-    test("takeWhileWithUnfold")(stream123.takeWhileWithUnfold(isNot(3)).toList)(List(1,2))
-    test("zipWith")(stream123.zipWith(emptyIntStream)((a,b) => s"$a$b").toList)(Nil)
-    test("zipWith")(stream123.zipWith(stream456)((a,b) => s"$a$b").toList)(List("14","25","36"))
-    test("zipAll")(Stream("A").zipAll(stream123).toList)(List((Some("A"),Some(1)),(None,Some(2)),(None,Some(3))))
+  test("startsWith")(stream123 startsWith Stream(1,2))(true)
+  test("startsWith")(stream123 startsWith stream123)(true)
+  test("startsWith")(Stream(1,2) startsWith stream123)(false)
+  test("startsWith")(emptyIntStream startsWith Stream(1,2))(false)
 
-    test("startsWith")(stream123 startsWith Stream(1,2))(true)
-    test("startsWith")(stream123 startsWith stream123)(true)
-    test("startsWith")(Stream(1,2) startsWith stream123)(false)
-    test("startsWith")(emptyIntStream startsWith Stream(1,2))(false)
-
-    test("tails")(stream123.tails.toList.map(_.toList))(Stream(Stream(1,2,3), Stream(2,3), Stream(3), Stream()).toList.map(_.toList))
-  }
+  test("tails")(stream123.tails.toList.map(_.toList))(Stream(Stream(1,2,3), Stream(2,3), Stream(3), Stream()).toList.map(_.toList))
 }

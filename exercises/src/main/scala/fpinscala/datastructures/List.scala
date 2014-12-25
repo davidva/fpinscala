@@ -138,51 +138,47 @@ object List { // `List` companion object. Contains functions for creating and wo
   }
 }
 
-object ListTest {
-  import fpinscala.Test.test
+object ListTest extends App with fpinscala.Test {
+  test("tail")(List.tail(List(1, 2, 3)))(List(2, 3))
+  test("tail")(List.tail(List(1)))(Nil)
+  test("setHead")(List.setHead(List(1), 0))(List(0))
+  test("setHead")(List.setHead(List(1, 2), 0))(List(0, 2))
+  test("drop")(List.drop(List(1, 2), 0))(List(1, 2))
+  test("drop")(List.drop(List(1, 2), 2))(Nil)
+  test("drop")(List.drop(List(1, 2), 3))(Nil)
+  test("dropWhile")(List.dropWhile(List(1, 2, 1), (x: Int) => x > 0))(Nil)
+  test("dropWhile")(List.dropWhile(List(1, 2, 1), (x: Int) => x < 0))(List(1, 2, 1))
+  test("dropWhile")(List.dropWhile(List(1, 2, 1), (x: Int) => x < 2))(List(2, 1))
+  test("init")(List.init(List(1)))(Nil)
+  test("init")(List.init(List(1, 2, 3, 4)))(List(1, 2, 3))
+  test("length")(List.length(Nil))(0)
+  test("length")(List.length(List(1, 2, 3, 4)))(4)
+  test("foldLeft")(List.foldLeft(List(1, 2, 3, 4), 10)(_ + _))(20)
 
-  def main(args: Array[String]): Unit = {
-    test("tail")(List.tail(List(1, 2, 3)))(List(2, 3))
-    test("tail")(List.tail(List(1)))(Nil)
-    test("setHead")(List.setHead(List(1), 0))(List(0))
-    test("setHead")(List.setHead(List(1, 2), 0))(List(0, 2))
-    test("drop")(List.drop(List(1, 2), 0))(List(1, 2))
-    test("drop")(List.drop(List(1, 2), 2))(Nil)
-    test("drop")(List.drop(List(1, 2), 3))(Nil)
-    test("dropWhile")(List.dropWhile(List(1, 2, 1), (x: Int) => x > 0))(Nil)
-    test("dropWhile")(List.dropWhile(List(1, 2, 1), (x: Int) => x < 0))(List(1, 2, 1))
-    test("dropWhile")(List.dropWhile(List(1, 2, 1), (x: Int) => x < 2))(List(2, 1))
-    test("init")(List.init(List(1)))(Nil)
-    test("init")(List.init(List(1, 2, 3, 4)))(List(1, 2, 3))
-    test("length")(List.length(Nil))(0)
-    test("length")(List.length(List(1, 2, 3, 4)))(4)
-    test("foldLeft")(List.foldLeft(List(1, 2, 3, 4), 10)(_ + _))(20)
+  val ints = List(1, 2, 3, 4)
+  test("sumLeft")(List.sum(ints))(List.sumLeft(ints))
 
-    val ints = List(1, 2, 3, 4)
-    test("sumLeft")(List.sum(ints))(List.sumLeft(ints))
+  val doubles = List[Double](1, 2, 3, 4)
+  test("productLeft")(List.product(doubles))(List.productLeft(doubles))
+  test("lengthLeft")(List.length(doubles))(List.lengthLeft(doubles))
 
-    val doubles = List[Double](1, 2, 3, 4)
-    test("productLeft")(List.product(doubles))(List.productLeft(doubles))
-    test("lengthLeft")(List.length(doubles))(List.lengthLeft(doubles))
+  test("reverse")(List.reverse(List(1, 2, 3, 4)))(List(4, 3, 2, 1))
 
-    test("reverse")(List.reverse(List(1, 2, 3, 4)))(List(4, 3, 2, 1))
+  test("appendWithFoldRight")(List.appendWithFoldRight(List(1, 2), List(3, 4)))(List(1, 2, 3, 4))
 
-    test("appendWithFoldRight")(List.appendWithFoldRight(List(1, 2), List(3, 4)))(List(1, 2, 3, 4))
+  test("plus1")(List.plus1(List(1, 2, 3)))(List(2, 3, 4))
+  test("mapToStr")(List.mapToStr(List(1, 2, 3)))(List("1", "2", "3"))
+  test("map")(List.map(List(1, 2, 3, 4))(_ * 2))(List(2, 4, 6, 8))
 
-    test("plus1")(List.plus1(List(1, 2, 3)))(List(2, 3, 4))
-    test("mapToStr")(List.mapToStr(List(1, 2, 3)))(List("1", "2", "3"))
-    test("map")(List.map(List(1, 2, 3, 4))(_ * 2))(List(2, 4, 6, 8))
+  test("filter")(List.filter(List(1, 2, 3, 4))(_ % 2 == 0))(List(2, 4))
 
-    test("filter")(List.filter(List(1, 2, 3, 4))(_ % 2 == 0))(List(2, 4))
+  test("flatMap")(List.flatMap(List(1, 2, 3))(i => List(i, i)))(List(1, 1, 2, 2, 3, 3))
 
-    test("flatMap")(List.flatMap(List(1, 2, 3))(i => List(i, i)))(List(1, 1, 2, 2, 3, 3))
+  test("filterWithFlatMap")(List.filterWithFlatMap(List(1, 2, 3, 4))(_ % 2 == 0))(List(2, 4))
+  test("addPairWise")(List.addPairWise(List(1, 2, 3), List(4, 5, 6)))(List(5, 7, 9))
 
-    test("filterWithFlatMap")(List.filterWithFlatMap(List(1, 2, 3, 4))(_ % 2 == 0))(List(2, 4))
-    test("addPairWise")(List.addPairWise(List(1, 2, 3), List(4, 5, 6)))(List(5, 7, 9))
-
-    test("hasSubsequence")(List.hasSubsequence(List(1, 2, 3), List(1, 3)))(false)
-    test("hasSubsequence")(List.hasSubsequence(List(1, 2, 3), List(1, 2)))(true)
-    test("hasSubsequence")(List.hasSubsequence(List(1, 2, 3), List(2, 3)))(true)
-    test("hasSubsequence")(List.hasSubsequence(List(1, 2, 3), List(3)))(true)
-  }
+  test("hasSubsequence")(List.hasSubsequence(List(1, 2, 3), List(1, 3)))(false)
+  test("hasSubsequence")(List.hasSubsequence(List(1, 2, 3), List(1, 2)))(true)
+  test("hasSubsequence")(List.hasSubsequence(List(1, 2, 3), List(2, 3)))(true)
+  test("hasSubsequence")(List.hasSubsequence(List(1, 2, 3), List(3)))(true)
 }

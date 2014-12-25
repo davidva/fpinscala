@@ -65,38 +65,34 @@ object Option {
   }
 }
 
-object OptionTest {
-  import fpinscala.Test.test
+object OptionTest extends App with fpinscala.Test {
+  test("map")(None.map(x => Some(x.toString)))(None)
+  test("map")(Some(1).map(x => Some(x.toString)))(Some(Some("1")))
 
-  def main(args: Array[String]): Unit = {
-    test("map")(None.map(x => Some(x.toString)))(None)
-    test("map")(Some(1).map(x => Some(x.toString)))(Some(Some("1")))
+  test("getOrElse")(None.getOrElse("a"))("a")
+  test("getOrElse")(Some("1").getOrElse(Some("a")))("1")
 
-    test("getOrElse")(None.getOrElse("a"))("a")
-    test("getOrElse")(Some("1").getOrElse(Some("a")))("1")
+  test("flatMap")(None.flatMap(x => Some(x.toString)))(None)
+  test("flatMap")(Some(1).flatMap(x => Some(x.toString)))(Some("1"))
 
-    test("flatMap")(None.flatMap(x => Some(x.toString)))(None)
-    test("flatMap")(Some(1).flatMap(x => Some(x.toString)))(Some("1"))
+  test("orElse")(None.orElse(Some("a")))(Some("a"))
+  test("orElse")(Some("1").orElse(Some("a")))(Some("1"))
 
-    test("orElse")(None.orElse(Some("a")))(Some("a"))
-    test("orElse")(Some("1").orElse(Some("a")))(Some("1"))
+  test("filter")(None.filter(a => true))(None)
+  test("filter")(Some(1).filter(a => true))(Some(1))
 
-    test("filter")(None.filter(a => true))(None)
-    test("filter")(Some(1).filter(a => true))(Some(1))
+  test("map2")(Option.map2(None, Some(5))((x: Int, y: Int) => x * y))(None)
+  test("map2")(Option.map2(Some(4), Some(5))((x: Int, y: Int) => x * y))(Some(20))
 
-    test("map2")(Option.map2(None, Some(5))((x: Int, y: Int) => x * y))(None)
-    test("map2")(Option.map2(Some(4), Some(5))((x: Int, y: Int) => x * y))(Some(20))
+  test("sequence")(Option.sequence(List(Some(1),None,Some(3))))(None)
+  test("sequence")(Option.sequence(List(Some(1),Some(2),Some(3))))(Some(List(1,2,3)))
 
-    test("sequence")(Option.sequence(List(Some(1),None,Some(3))))(None)
-    test("sequence")(Option.sequence(List(Some(1),Some(2),Some(3))))(Some(List(1,2,3)))
-
-    def Try[A,B](f: A => B)(a: A): Option[B] =
-      try {
-        Some(f(a))
-      } catch {
-        case e: Exception => None
-      }
-    test("traverse")(Option.traverse(List("1","a"))(Try(i => i.toInt)))(None)
-    test("traverse")(Option.traverse(List("1","2"))(Try(i => i.toInt)))(Some(List(1,2)))
-  }
+  def Try[A,B](f: A => B)(a: A): Option[B] =
+    try {
+      Some(f(a))
+    } catch {
+      case e: Exception => None
+    }
+  test("traverse")(Option.traverse(List("1","a"))(Try(i => i.toInt)))(None)
+  test("traverse")(Option.traverse(List("1","2"))(Try(i => i.toInt)))(Some(List(1,2)))
 }

@@ -24,15 +24,11 @@ object Tree {
   }
 }
 
-object TreeTest {
-  import fpinscala.Test.test
+object TreeTest extends App with fpinscala.Test {
+  val tree: Tree[Int] = Branch(Branch(Leaf(1), Leaf(7)), Leaf(3))
 
-  def main(args: Array[String]): Unit = {
-    val tree: Tree[Int] = Branch(Branch(Leaf(1), Leaf(7)), Leaf(3))
-
-    test("size")(Tree.size(tree))(5)
-    test("maximum")(Tree.maximum(tree))(7)
-    test("depth")(Tree.depth(tree))(3)
-    test("map")(Tree.map(tree)(x => x.toString))(Branch(Branch(Leaf("1"), Leaf("7")), Leaf("3")))
-  }
+  test("size")(Tree.size(tree))(5)
+  test("maximum")(Tree.maximum(tree))(7)
+  test("depth")(Tree.depth(tree))(3)
+  test("map")(Tree.map(tree)(x => x.toString))(Branch(Branch(Leaf("1"), Leaf("7")), Leaf("3")))
 }

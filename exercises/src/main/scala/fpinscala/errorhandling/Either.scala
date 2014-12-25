@@ -54,46 +54,42 @@ object Either {
     }
 }
 
-object EitherTest {
-  import fpinscala.Test.test
+object EitherTest extends App with fpinscala.Test {
+  val left: Either[String,Int] = Left("I'm left")
+  val right0: Either[String,Int] = Right(0)
+  val right2: Either[String,Int] = Right(2)
+  val right4: Either[String,Int] = Right(4)
 
-  def main(args: Array[String]): Unit = {
-    val left: Either[String,Int] = Left("I'm left")
-    val right0: Either[String,Int] = Right(0)
-    val right2: Either[String,Int] = Right(2)
-    val right4: Either[String,Int] = Right(4)
+  def dup(x: Int): Int = x * 2
+  test("map")(left map dup)(left)
+  test("map")(right2 map dup)(right4)
 
-    def dup(x: Int): Int = x * 2
-    test("map")(left map dup)(left)
-    test("map")(right2 map dup)(right4)
-
-    def invert(x: Int): Either[String, Double] = x match {
-      case 0 => Left("cannot divide by 0")
-      case x => Right(1d / x)
-    }
-
-    test("flatMap")(left flatMap invert)(left)
-    test("flatMap")(right0 flatMap invert)(Left("cannot divide by 0"))
-    test("flatMap")(right2 flatMap invert)(Right(0.5))
-
-    test("orElse")(left orElse right2)(right2)
-    test("orElse")(right0 orElse right2)(right0)
-
-    def append(x: Int, y: Int): String = s"$x$y"
-    test("map2")(left.map2(right2)(append))(left)
-    test("map2")(right0.map2(left)(append))(left)
-    test("map2")(right0.map2(right2)(append))(Right("02"))
-
-    test("sequence")(Either.sequence(List(Right(1),Left("left"),Right(3))))(Left("left"))
-    test("sequence")(Either.sequence(List(Right(1),Right(2),Right(3))))(Right(List(1,2,3)))
-
-    def safeToInt(i: String): Either[String, Int] =
-      try {
-        Right(i.toInt)
-      } catch {
-        case e: Exception => Left("not a number")
-      }
-    test("traverse")(Either.traverse(List("1","a"))(safeToInt))(Left("not a number"))
-    test("traverse")(Either.traverse(List("1","2"))(safeToInt))(Right(List(1,2)))
+  def invert(x: Int): Either[String, Double] = x match {
+    case 0 => Left("cannot divide by 0")
+    case x => Right(1d / x)
   }
+
+  test("flatMap")(left flatMap invert)(left)
+  test("flatMap")(right0 flatMap invert)(Left("cannot divide by 0"))
+  test("flatMap")(right2 flatMap invert)(Right(0.5))
+
+  test("orElse")(left orElse right2)(right2)
+  test("orElse")(right0 orElse right2)(right0)
+
+  def append(x: Int, y: Int): String = s"$x$y"
+  test("map2")(left.map2(right2)(append))(left)
+  test("map2")(right0.map2(left)(append))(left)
+  test("map2")(right0.map2(right2)(append))(Right("02"))
+
+  test("sequence")(Either.sequence(List(Right(1),Left("left"),Right(3))))(Left("left"))
+  test("sequence")(Either.sequence(List(Right(1),Right(2),Right(3))))(Right(List(1,2,3)))
+
+  def safeToInt(i: String): Either[String, Int] =
+    try {
+      Right(i.toInt)
+    } catch {
+      case e: Exception => Left("not a number")
+    }
+  test("traverse")(Either.traverse(List("1","a"))(safeToInt))(Left("not a number"))
+  test("traverse")(Either.traverse(List("1","2"))(safeToInt))(Right(List(1,2)))
 }
