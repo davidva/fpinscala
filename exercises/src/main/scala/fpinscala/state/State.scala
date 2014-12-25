@@ -30,17 +30,42 @@ object RNG {
       (f(a), rng2)
     }
 
-  def nonNegativeInt(rng: RNG): (Int, RNG) = ???
+  def nonNegativeInt(rng: RNG): (Int, RNG) = {
+    val (i, r) = rng.nextInt
+    (if (i < 0) -(i + 1) else i, r)
+  }
 
-  def double(rng: RNG): (Double, RNG) = ???
+  def double(rng: RNG): (Double, RNG) = {
+    val (i, r) = nonNegativeInt(rng)
+    (i / (Int.MaxValue.toDouble + 1), r)
+  }
 
-  def intDouble(rng: RNG): ((Int,Double), RNG) = ???
+  def intDouble(rng: RNG): ((Int,Double), RNG) = {
+    val (i, r1) = rng.nextInt
+    val (d, r2) = double(r1)
+    ((i, d), r2)
+  }
 
-  def doubleInt(rng: RNG): ((Double,Int), RNG) = ???
+  def doubleInt(rng: RNG): ((Double,Int), RNG) = {
+    val ((i, d), r) = intDouble(rng)
+    ((d, i), r)
+  }
 
-  def double3(rng: RNG): ((Double,Double,Double), RNG) = ???
+  def double3(rng: RNG): ((Double,Double,Double), RNG) = {
+    val (d1, r1) = double(rng)
+    val (d2, r2) = double(r1)
+    val (d3, r3) = double(r2)
+    ((d1, d2, d3), r3)
+  }
 
-  def ints(count: Int)(rng: RNG): (List[Int], RNG) = ???
+  def ints(count: Int)(rng: RNG): (List[Int], RNG) = {
+    if (count == 0) (Nil, rng)
+    else {
+      val (x, r1) = rng.nextInt
+      val (xs, r2) = ints(count - 1)(r1)
+      (x :: xs, r2)
+    }
+  }
 
   def map2[A,B,C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = ???
 
@@ -67,4 +92,19 @@ case class Machine(locked: Boolean, candies: Int, coins: Int)
 object State {
   type Rand[A] = State[RNG, A]
   def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] = ???
+}
+
+object StateTest extends App with fpinscala.Test {
+  val rng0 = RNG.Simple(0)
+  val rng1 = RNG.Simple(1)
+
+  test("nonNegativeInt")(RNG.nonNegativeInt(rng1)._1)(384748)
+  test("double")(RNG.double(rng1)._1)(1.7916224896907806E-4)
+
+  test("intDouble")(RNG.intDouble(rng0)._1)((0, 0.0019707889296114445))
+  test("doubleInt")(RNG.doubleInt(rng0)._1)((0.0019707889296114445, 0))
+
+  test("ints")(RNG.ints(0)(rng1)._1)(Nil)
+  test("ints")(RNG.ints(1)(rng1)._1)(List(384748))
+  test("ints")(RNG.ints(2)(rng1)._1)(List(384748, -1151252339))
 }
