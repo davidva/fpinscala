@@ -35,21 +35,12 @@ object RNG {
     (if (i < 0) -(i + 1) else i, r)
   }
 
-  def double(rng: RNG): (Double, RNG) = {
-    val (i, r) = nonNegativeInt(rng)
-    (i / (Int.MaxValue.toDouble + 1), r)
-  }
+  def double(rng: RNG): (Double, RNG) =
+    map(nonNegativeInt)(_ / (Int.MaxValue.toDouble + 1))(rng)
 
-  def intDouble(rng: RNG): ((Int,Double), RNG) = {
-    val (i, r1) = rng.nextInt
-    val (d, r2) = double(r1)
-    ((i, d), r2)
-  }
+  def intDouble(rng: RNG): ((Int,Double), RNG) = both(int, double)(rng)
 
-  def doubleInt(rng: RNG): ((Double,Int), RNG) = {
-    val ((i, d), r) = intDouble(rng)
-    ((d, i), r)
-  }
+  def doubleInt(rng: RNG): ((Double,Int), RNG) = both(double, int)(rng)
 
   def double3(rng: RNG): ((Double,Double,Double), RNG) = {
     val (d1, r1) = double(rng)
@@ -58,21 +49,20 @@ object RNG {
     ((d1, d2, d3), r3)
   }
 
-  def ints(count: Int)(rng: RNG): (List[Int], RNG) = {
-    @annotation.tailrec
-    def go(count: Int, rng: RNG, acc: List[Int]): (List[Int], RNG) = {
-      if (count == 0) (acc, rng)
-      else {
-        val (i, r1) = rng.nextInt
-        go(count -1, r1, i :: acc)
-      }
+  def ints(count: Int)(rng: RNG): (List[Int], RNG) =
+    sequence(List.fill(count)(int))(rng)
+
+  def map2[A,B,C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] =
+    rng => {
+      val (a, r1) = ra(rng)
+      val (b, r2) = rb(r1)
+      (f(a, b), r2)
     }
-    go(count, rng, Nil)
-  }
 
-  def map2[A,B,C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = ???
+  def both[A,B](ra: Rand[A], rb: Rand[B]): Rand[(A,B)] = map2(ra, rb)((_, _))
 
-  def sequence[A](fs: List[Rand[A]]): Rand[List[A]] = ???
+  def sequence[A](fs: List[Rand[A]]): Rand[List[A]] =
+    fs.foldRight(unit(List[A]()))((f, acc) => map2(f, acc)(_ :: _))
 
   def flatMap[A,B](f: Rand[A])(g: A => Rand[B]): Rand[B] = ???
 }
@@ -105,9 +95,10 @@ object StateTest extends App with fpinscala.Test {
   test("double")(RNG.double(rng1)._1)(1.7916224896907806E-4)
 
   test("intDouble")(RNG.intDouble(rng0)._1)((0, 0.0019707889296114445))
-  test("doubleInt")(RNG.doubleInt(rng0)._1)((0.0019707889296114445, 0))
+  test("doubleInt")(RNG.doubleInt(rng0)._1)((0.0, 4232237))
 
   test("ints")(RNG.ints(0)(rng1)._1)(Nil)
-  test("ints")(RNG.ints(1)(rng1)._1)(List(384748))
-  test("ints")(RNG.ints(2)(rng1)._1)(List(-1151252339, 384748))
+  test("ints")(RNG.ints(5)(rng1)._1)(List(384748, -1151252339, -549383847, 1612966641, -883454042))
+
+  test("sequence")(RNG.sequence(List(RNG.unit(1), RNG.unit(2), RNG.unit(3)))(rng1)._1)(List(1, 2, 3))
 }
