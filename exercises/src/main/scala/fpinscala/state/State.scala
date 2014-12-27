@@ -64,7 +64,18 @@ object RNG {
   def sequence[A](fs: List[Rand[A]]): Rand[List[A]] =
     fs.foldRight(unit(List[A]()))((f, acc) => map2(f, acc)(_ :: _))
 
-  def flatMap[A,B](f: Rand[A])(g: A => Rand[B]): Rand[B] = ???
+  def flatMap[A,B](f: Rand[A])(g: A => Rand[B]): Rand[B] =
+    rng => {
+      val (a, r1) = f(rng)
+      g(a)(r1)
+    }
+
+  def nonNegativeLessThan(n: Int): Rand[Int] =
+    flatMap(nonNegativeInt)(i => {
+      val mod = i % n
+      if (i + (n-1) - mod >= 0) unit(mod)
+      else nonNegativeLessThan(n)
+    })
 }
 
 case class State[S,+A](run: S => (A, S)) {
@@ -101,4 +112,6 @@ object StateTest extends App with fpinscala.Test {
   test("ints")(RNG.ints(5)(rng1)._1)(List(384748, -1151252339, -549383847, 1612966641, -883454042))
 
   test("sequence")(RNG.sequence(List(RNG.unit(1), RNG.unit(2), RNG.unit(3)))(rng1)._1)(List(1, 2, 3))
+
+  test("nonNegativeLessThan")(RNG.nonNegativeLessThan(2)(rng1)._1)(0)
 }
