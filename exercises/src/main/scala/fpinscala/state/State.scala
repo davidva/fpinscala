@@ -25,10 +25,7 @@ object RNG {
     rng => (a, rng)
 
   def map[A,B](s: Rand[A])(f: A => B): Rand[B] =
-    rng => {
-      val (a, rng2) = s(rng)
-      (f(a), rng2)
-    }
+    flatMap(s)(a => unit(f(a)))
 
   def nonNegativeInt(rng: RNG): (Int, RNG) = {
     val (i, r) = rng.nextInt
@@ -53,11 +50,7 @@ object RNG {
     sequence(List.fill(count)(int))(rng)
 
   def map2[A,B,C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] =
-    rng => {
-      val (a, r1) = ra(rng)
-      val (b, r2) = rb(r1)
-      (f(a, b), r2)
-    }
+    flatMap(ra)(a => map(rb)(b => f(a, b)))
 
   def both[A,B](ra: Rand[A], rb: Rand[B]): Rand[(A,B)] = map2(ra, rb)((_, _))
 
