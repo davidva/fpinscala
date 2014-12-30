@@ -97,8 +97,27 @@ object State {
   def sequence[S,A](fs: List[State[S,A]]): State[S,List[A]] =
     fs.foldRight(unit[S, List[A]](List[A]())) ((f, acc) => f.map2(acc)(_ :: _))
 
+  def modify[S](f: S => S): State[S, Unit] = for {
+    s <- getState // Gets the current state and assigns it to `s`.
+    _ <- setState(f(s)) // Sets the new state to `f` applied to `s`.
+  } yield ()
+
+  def getState[S]: State[S, S] = State(s => (s, s))
+
+  def setState[S](s: S): State[S, Unit] = State(_ => ((), s))
+
   type Rand[A] = State[RNG, A]
-  def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] = ???
+  def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] =
+    for {
+      _ <- sequence(inputs.map(i => modify((s: Machine) => (i, s) match {
+        case (_, Machine(_, 0, _)) => s
+        case (Coin, Machine(false, _, _)) => s
+        case (Coin, Machine(true, candy, coin)) => Machine(false, candy, coin + 1)
+        case (Turn, Machine(true, _, _)) => s
+        case (Turn, Machine(false, candy, coin)) => Machine(true, candy - 1, coin)
+      })))
+      s <- getState
+    } yield (s.candies, s.coins)
 }
 
 object StateTest extends App with fpinscala.Test {
@@ -117,4 +136,7 @@ object StateTest extends App with fpinscala.Test {
   test("sequence")(RNG.sequence(List(RNG.unit(1), RNG.unit(2), RNG.unit(3)))(rng1)._1)(List(1, 2, 3))
 
   test("nonNegativeLessThan")(RNG.nonNegativeLessThan(2)(rng1)._1)(0)
+
+  val result = State.simulateMachine(List(Coin, Turn, Turn, Coin, Coin, Turn)) run Machine(true, 5, 0)
+  test("simulateMachine")(result._1)(Machine(true, 3, 2))
 }
