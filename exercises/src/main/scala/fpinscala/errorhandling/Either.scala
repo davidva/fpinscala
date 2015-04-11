@@ -30,9 +30,14 @@ case class Left[+E](get: E) extends Either[E,Nothing]
 case class Right[+A](get: A) extends Either[Nothing,A]
 
 object Either {
-  def traverse[E,A,B](es: List[A])(f: A => Either[E, B]): Either[E, List[B]] = sys.error("todo")
+  def traverse[E,A,B](es: List[A])(f: A => Either[E, B]): Either[E, List[B]] = 
+    es match {
+      case Nil => Right(Nil)
+      case a :: ta => f(a) flatMap (b => traverse(ta)(f) map (tb => b :: tb))
+    }
 
-  def sequence[E,A](es: List[Either[E,A]]): Either[E,List[A]] = sys.error("todo")
+  def sequence[E,A](es: List[Either[E,A]]): Either[E,List[A]] =
+    traverse(es)(identity)
 
   def mean(xs: IndexedSeq[Double]): Either[String, Double] = 
     if (xs.isEmpty) 
@@ -47,15 +52,6 @@ object Either {
   def Try[A](a: => A): Either[Exception, A] =
     try Right(a)
     catch { case e: Exception => Left(e) }
-
-  def sequence[E, A](es: List[Either[E, A]]): Either[E, List[A]] =
-    traverse(es)(identity)
-
-  def traverse[E, A, B](as: List[A])(f: A => Either[E, B]): Either[E, List[B]] =
-    as match {
-      case Nil => Right(Nil)
-      case a :: ta => f(a) flatMap (b => traverse(ta)(f) map (tb => b :: tb))
-    }
 }
 
 object EitherTest extends App with fpinscala.Test {

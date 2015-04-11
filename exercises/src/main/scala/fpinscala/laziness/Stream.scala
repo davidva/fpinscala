@@ -100,13 +100,6 @@ trait Stream[+A] {
       case Empty => None
       case s => Some((s, s drop 1))
     } append Stream(empty)
-
-  def headOption: Option[A] = sys.error("todo")
-
-  // 5.7 map, filter, append, flatmap using foldRight. Part of the exercise is
-  // writing your own function signatures.
-
-  def startsWith[B](s: Stream[B]): Boolean = sys.error("todo")
 }
 case object Empty extends Stream[Nothing]
 case class Cons[+A](h: () => A, t: () => Stream[A]) extends Stream[A]
